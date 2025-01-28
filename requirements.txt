@@ -1,5 +1,6 @@
 streamlit
-pandas
+geopandas
 numpy
+scikit-learn
 folium
 streamlit-folium
