@@ -1,6 +1,9 @@
 streamlit
 geopandas
+pandas
 numpy
 scikit-learn
 folium
 streamlit-folium
+Pillow
+requests
