@@ -6,9 +6,23 @@ from sklearn.linear_model import PoissonRegressor, GammaRegressor
 import folium
 from streamlit_folium import folium_static
 from sklearn.preprocessing import MinMaxScaler
+from PIL import Image
+import requests
+from io import BytesIO
 
 # Set page config
-st.set_page_config(page_title="UK Claims Prediction Map", layout="wide")
+st.set_page_config(page_title="UK Claims - Frequency and Severity Map", layout="wide")
+
+# Load and display the logo in the top right corner
+logo_url = "https://github.com/mrIbadan/UK_Map_Test/raw/main/Integra-Logo.jpg"
+response = requests.get(logo_url)
+logo = Image.open(BytesIO(response.content))
+col1, col2, col3 = st.columns([1,1,1])
+with col3:
+    st.image(logo, width=200)
+
+# Title
+st.title("UK Claims - Frequency and Severity Map")
 
 # Load GeoJSON file from GitHub
 @st.cache_data
@@ -38,7 +52,7 @@ def assign_risk_factor(name):
         return np.random.uniform(0.5, 1.5)
 
 gdf['risk_factor'] = gdf['CTYUA24NM'].apply(assign_risk_factor)
-gdf['claim_frequency'] = np.random.poisson(lam=gdf['population'] * gdf['risk_factor'] / 5000)
+gdf['claim_frequency'] = np.random.poisson(lam=gdf['population'] * gdf['risk_factor'] / 1000)
 gdf['claim_severity'] = np.random.gamma(shape=2, scale=gdf['risk_factor'] * 1000, size=len(gdf))
 
 # Frequency Model (Poisson GLM)
@@ -55,9 +69,6 @@ sev_model.fit(X, y_sev)
 # Predict and add to GeoDataFrame
 gdf['predicted_frequency'] = freq_model.predict(X)
 gdf['predicted_severity'] = sev_model.predict(X)
-
-# Streamlit app
-st.title("UK Claims Prediction Map")
 
 # Dropdown for selecting prediction type
 prediction_type = st.selectbox(
