@@ -56,11 +56,6 @@ sev_model.fit(X, y_sev)
 gdf['predicted_frequency'] = freq_model.predict(X)
 gdf['predicted_severity'] = sev_model.predict(X)
 
-# Normalize predictions to 0-100 scale
-scaler = MinMaxScaler(feature_range=(0, 100))
-gdf['predicted_frequency_normalized'] = scaler.fit_transform(gdf[['predicted_frequency']])
-gdf['predicted_severity_normalized'] = scaler.fit_transform(gdf[['predicted_severity']])
-
 # Streamlit app
 st.title("UK Claims Prediction Map")
 
@@ -75,14 +70,13 @@ m = folium.Map(location=[55, -3], zoom_start=6)
 
 # Determine which column to use based on selection
 if prediction_type == "Claims Frequency":
-    column_to_plot = 'predicted_frequency_normalized'
+    column_to_plot = 'predicted_frequency'
     legend_name = 'Predicted Claims Frequency'
+    tooltip_alias = 'Claims Frequency'
 else:
-    column_to_plot = 'predicted_severity_normalized'
+    column_to_plot = 'predicted_severity'
     legend_name = 'Predicted Claims Severity'
-
-# Custom color scale
-color_scale = ['#0000FF', '#00FF00', '#FFFF00', '#FF0000']
+    tooltip_alias = 'Claims Severity (£)'
 
 # Create choropleth layer
 folium.Choropleth(
@@ -104,8 +98,9 @@ folium.GeoJson(
     style_function=lambda x: {'fillColor': 'transparent', 'color': 'black', 'weight': 0.5},
     tooltip=folium.GeoJsonTooltip(
         fields=['CTYUA24NM', column_to_plot],
-        aliases=['County/UA Name', 'Risk Score'],
-        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;")
+        aliases=['County/UA Name', tooltip_alias],
+        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;"),
+        localize=True,  # This will format numbers according to locale
     )
 ).add_to(m)
 
@@ -113,7 +108,8 @@ folium.GeoJson(
 folium.LayerControl().add_to(m)
 
 # Display the map in Streamlit
-folium_static(m)
+st.markdown("## Interactive Map")
+folium_static(m, width=1200, height=800)  # Increased size
 
 # Display some statistics
 st.subheader(f"Statistics for {prediction_type}")
